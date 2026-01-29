@@ -23,6 +23,14 @@
           "minimum": 10,
           "maximum": 500
         },
+        "artistSimilarCount": {
+          "type": "integer",
+          "title": "Number of Similar Artists",
+          "description": "Maximum number of similar artists to request from AudioMuse-AI",
+          "default": 10,
+          "minimum": 1,
+          "maximum": 100
+        },
         "eliminateDuplicates": {
           "type": "boolean",
           "title": "Eliminate Duplicates",
@@ -47,6 +55,10 @@
         {
           "type": "Control",
           "scope": "#/properties/trackCount"
+        },
+        {
+          "type": "Control",
+          "scope": "#/properties/artistSimilarCount"
         },
         {
           "type": "HorizontalLayout",
