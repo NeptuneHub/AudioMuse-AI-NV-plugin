@@ -7,7 +7,7 @@
 
 A Navidrome plugin that reimplements the "Instant Mix" button to use AudioMuse-AI for similar track recommendations.
 
-**IMPORTANT** InstantMix support in Navidrome is still not released in the stable image, you can find only in the develop image
+> **IMPORTANT** InstantMix support in Navidrome is still not released in the stable image, you can find only in the `develop` image
 
 **The full list or AudioMuse-AI related repository are:** 
   > * [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI): the core application, it run Flask and Worker containers to actually run all the feature;
