@@ -1,8 +1,20 @@
 # AudioMuse-AI Navidrome Plugin
 
+<p align="center">
+  <img src="https://github.com/NeptuneHub/audiomuse-ai-plugin/blob/master/audiomuseai.png?raw=true" alt="AudioMuse-AI Logo" width="480">
+</p>
+
+
 A Navidrome plugin that reimplements the "Instant Mix" button to use AudioMuse-AI for similar track recommendations.
 
 **IMPORTANT** InstantMix support in Navidrome is still not released in the stable image, you can find only in the develop image
+
+**The full list or AudioMuse-AI related repository are:** 
+  > * [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI): the core application, it run Flask and Worker containers to actually run all the feature;
+  > * [AudioMuse-AI Helm Chart](https://github.com/NeptuneHub/AudioMuse-AI-helm): helm chart for easy installation on Kubernetes;
+  > * [AudioMuse-AI Plugin for Jellyfin](https://github.com/NeptuneHub/audiomuse-ai-plugin): Jellyfin Plugin;
+  > * [AudioMuse-AI Plugin for Navidrome](https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin): Navidrome Plugin;
+  > * [AudioMuse-AI MusicServer](https://github.com/NeptuneHub/AudioMuse-AI-MusicServer): Open Subosnic like Music Sever with integrated sonic functionality.
 
 ## HOW-TO Install
 
