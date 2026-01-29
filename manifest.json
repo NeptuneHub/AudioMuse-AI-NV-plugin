@@ -12,13 +12,13 @@
         "apiUrl": {
           "type": "string",
           "title": "AudioMuse-AI API URL",
-          "description": "Base URL for the AudioMuse-AI server (e.g., http://192.168.3.169:8087)",
+          "description": "Base URL for the AudioMuse-AI server (e.g., http://192.168.3.203:8000).",
           "default": "http://192.168.3.203:8000"
         },
         "trackCount": {
           "type": "integer",
           "title": "Number of Similar Tracks",
-          "description": "Maximum number of similar tracks to return",
+          "description": "Maximum number of similar tracks to return. Default: 200",
           "default": 200,
           "minimum": 10,
           "maximum": 500
@@ -26,7 +26,7 @@
         "artistSimilarCount": {
           "type": "integer",
           "title": "Number of Similar Artists",
-          "description": "Maximum number of similar artists to request from AudioMuse-AI",
+          "description": "Maximum number of similar artists to request from AudioMuse-AI. Default: 10",
           "default": 10,
           "minimum": 1,
           "maximum": 100
@@ -34,13 +34,13 @@
         "eliminateDuplicates": {
           "type": "boolean",
           "title": "Eliminate Duplicates",
-          "description": "Remove duplicate tracks from results",
+          "description": "Remove duplicate tracks from results. Default: true",
           "default": true
         },
         "radiusSimilarity": {
           "type": "boolean",
           "title": "Use Radius Similarity",
-          "description": "Use radius-based similarity algorithm",
+          "description": "Use radius-based similarity algorithm. Default: true",
           "default": true
         }
       }
@@ -49,27 +49,45 @@
       "type": "VerticalLayout",
       "elements": [
         {
-          "type": "Control",
-          "scope": "#/properties/apiUrl"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/trackCount"
-        },
-        {
-          "type": "Control",
-          "scope": "#/properties/artistSimilarCount"
-        },
-        {
-          "type": "HorizontalLayout",
+          "type": "Group",
+          "label": "General Configuration",
           "elements": [
             {
               "type": "Control",
-              "scope": "#/properties/eliminateDuplicates"
-            },
+              "scope": "#/properties/apiUrl"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Song Instant Mix",
+          "elements": [
             {
               "type": "Control",
-              "scope": "#/properties/radiusSimilarity"
+              "scope": "#/properties/trackCount"
+            },
+            {
+              "type": "HorizontalLayout",
+              "elements": [
+                {
+                  "type": "Control",
+                  "scope": "#/properties/eliminateDuplicates"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/radiusSimilarity"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "label": "Artist Radio",
+          "elements": [
+            {
+              "type": "Control",
+              "scope": "#/properties/artistSimilarCount"
             }
           ]
         }
