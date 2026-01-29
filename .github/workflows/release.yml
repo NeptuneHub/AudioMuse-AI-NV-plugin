@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get next version
+        id: version
+        run: |
+          # Get the latest release tag, default to 0 if none exists
+          LATEST_TAG=$(git tag -l 'v*' --sort=-v:refname | head -n1 | sed 's/v//' || echo "0")
+          if [ -z "$LATEST_TAG" ]; then
+            LATEST_TAG=0
+          fi
+          NEXT_VERSION=$((LATEST_TAG + 1))
+          echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+          echo "Next version will be: v$NEXT_VERSION"
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Setup TinyGo
+        uses: acifani/setup-tinygo@v2
+        with:
+          tinygo-version: '0.34.0'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Update manifest version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}.0.0"
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" manifest.json
+
+      - name: Build and package plugin
+        run: make package
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Release v${{ steps.version.outputs.version }}
+          body: |
+            ## AudioMuse-AI Navidrome Plugin v${{ steps.version.outputs.version }}
+
+            ### Installation
+            1. Download `audiomuseai.ndp` (or unpack `manifest.json` + `plugin.wasm`).
+            2. Copy it to your Navidrome plugins directory and restart Navidrome.
+            3. Activate the plugin in Navidrome's Plugin Management UI and set AudioMuse-AI API URL.
+
+            ### What's included
+            - `audiomuseai.ndp` - packaged plugin (manifest + plugin.wasm)
+          files: |
+            audiomuseai.ndp
+            manifest.json
+          draft: false
+          prerelease: false
