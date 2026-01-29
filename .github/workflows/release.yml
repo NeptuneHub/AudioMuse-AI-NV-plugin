@@ -36,7 +36,12 @@ jobs:
       - name: Setup TinyGo
         uses: acifani/setup-tinygo@v2
         with:
-          tinygo-version: '0.34.0'
+          tinygo-version: '0.40.1'
+
+      - name: Check Go and TinyGo versions
+        run: |
+          go version
+          tinygo version
 
       - name: Download dependencies
         run: go mod download
