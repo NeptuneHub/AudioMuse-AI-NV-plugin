@@ -63,7 +63,7 @@ jobs:
             ## AudioMuse-AI Navidrome Plugin v${{ steps.version.outputs.version }}
 
             ### Installation
-            1. Download `audiomuseai.ndp` (or unpack `manifest.json` + `plugin.wasm`).
+            1. Download `audiomuseai.ndp`
             2. Copy it to your Navidrome plugins directory and restart Navidrome.
             3. Activate the plugin in Navidrome's Plugin Management UI and set AudioMuse-AI API URL.
 
