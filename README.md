@@ -5,7 +5,7 @@
 </p>
 
 
-AudioMuse-AI-NV-Plugin is a Navidrome plugin that integrates core AudioMuse-AI features into the Navidrome frontend.
+**AudioMuse-AI-NV-Plugin** the a Navidrome plugin that integrates core AudioMuse-AI features into the Navidrome frontend.
 
 Actually this is the list of integrated functionality:
 - Instant Mix - Song similarity
