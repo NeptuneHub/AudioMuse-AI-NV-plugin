@@ -5,7 +5,14 @@
 </p>
 
 
-A Navidrome plugin that reimplements the "Instant Mix" button to use AudioMuse-AI for similar track recommendations.
+AudioMuse-AI-NV-Plugin is a Navidrome plugin that integrates core AudioMuse-AI features into the Navidrome frontend.
+
+Actually this is the list of integrated functionality:
+- Instant Mix - Song similarity
+- Radio - Artist Similarity
+
+For Mobile app that want to map this functionality they need to implement the `getSimilarSongs2` API.
+
 
 > **IMPORTANT** InstantMix support in Navidrome is still not released in the stable image, you can find only in the `develop` image
 
