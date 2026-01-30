@@ -37,7 +37,7 @@ services:
     environment:
       - ND_PLUGINS_ENABLED=true
       - ND_PLUGINS_AUTORELOAD=true
-      - ND_AGENTS=audiomuseai
+      - ND_AGENTS=audiomuseai,lastfm,spotify,deezer
     volumes:
       - ./data:/data
       - /path/to/music:/music:ro
