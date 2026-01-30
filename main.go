@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"sort"
 	"strconv"
 
 	"github.com/navidrome/navidrome/plugins/pdk/go/metadata"
@@ -128,7 +127,7 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 
 
 	// Sort tracks by distance ascending (smaller distance = more similar)
-	sort.Slice(tracks, func(i, j int) bool { return tracks[i].Distance < tracks[j].Distance })
+	//sort.Slice(tracks, func(i, j int) bool { return tracks[i].Distance < tracks[j].Distance })
 
 	// Convert to Navidrome SongRef format preserving order
 	songs := make([]metadata.SongRef, 0, len(tracks))
