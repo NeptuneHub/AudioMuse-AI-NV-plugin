@@ -14,7 +14,7 @@ Actually this is the list of integrated functionality:
 For Mobile app that want to map this functionality they need to implement the `getSimilarSongs2` API.
 
 
-> **IMPORTANT** InstantMix support in Navidrome is still not released in the stable image, you can find only in the `develop` image
+> **IMPORTANT** InstantMix support in Navidrome start from v0.60.0: https://github.com/navidrome/navidrome/releases/tag/v0.60.0
 
 **The full list or AudioMuse-AI related repository are:** 
   > * [AudioMuse-AI](https://github.com/NeptuneHub/AudioMuse-AI): the core application, it run Flask and Worker containers to actually run all the feature;
