@@ -46,6 +46,8 @@ services:
 - Then you need to put `audiomuseai.ndp` in Navidrome data plugins folder (default: `/data/plugins`).
 - Restart Navidrome, go to UI -> Plugins, enable **AudioMuse-AI**, set **AudioMuse-AI API URL** and other configuration parameter.
 
+> Note: the audiomuseai.npd can be found attached to the release: https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin/releases
+
 ## HOW-TO build
 
 - Requirements (Ubuntu / macOS): Go, TinyGo.
