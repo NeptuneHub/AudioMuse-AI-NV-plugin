@@ -48,6 +48,8 @@ services:
 
 > Note: the audiomuseai.npd can be found attached to the release: https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin/releases
 
+See the official [Navidrome Documentation](https://www.navidrome.org/docs/usage/features/plugins/#managing-plugins-in-the-web-ui) for more information on how the plugin works.
+
 ## HOW-TO build
 
 - Requirements (Ubuntu / macOS): Go, TinyGo.
