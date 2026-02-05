@@ -10,8 +10,9 @@
 Actually this is the list of integrated functionality:
 - Instant Mix - Song similarity
 - Radio - Artist Similarity
+- Artist Info - It return similar artist
 
-For Mobile app that want to map this functionality they need to implement the `getSimilarSongs2` API.
+For Mobile app that want to map this functionality they need to implement the `getSimilarSongs2` / `getSimilarSongs` and `getArtistInfo` API.
 
 
 > **IMPORTANT** InstantMix support in Navidrome start from v0.60.0: https://github.com/navidrome/navidrome/releases/tag/v0.60.0
@@ -38,6 +39,7 @@ services:
       - ND_PLUGINS_ENABLED=true
       - ND_PLUGINS_AUTORELOAD=true
       - ND_AGENTS=audiomuseai,lastfm,spotify,deezer
+      - ND_DEVARTISTINFOTIMETOLIVE=1s
     volumes:
       - ./data:/data
       - /path/to/music:/music:ro
