@@ -1,0 +1,41 @@
+name: PR Build
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Setup TinyGo
+        uses: acifani/setup-tinygo@v2
+        with:
+          tinygo-version: '0.40.1'
+
+      - name: Check Go and TinyGo versions
+        run: |
+          go version
+          tinygo version
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Build plugin
+        run: make build
+
+      - name: Verify artifact
+        run: |
+          ls -la audiomuseai.wasm
+          file audiomuseai.wasm
