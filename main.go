@@ -27,8 +27,10 @@ const (
 	defaultRadiusSimilarity    = true
 )
 
-// Compile-time check that we implement the artist provider interface
+// Compile-time check that we implement necessary interfaces
 var _ metadata.SimilarSongsByArtistProvider = (*audioMusePlugin)(nil)
+var _ metadata.SimilarSongsByTrackProvider = (*audioMusePlugin)(nil)
+var _ metadata.SimilarArtistsProvider = (*audioMusePlugin)(nil)
 
 // audioMuseResponse represents a single track from AudioMuse-AI API
 type audioMuseResponse struct {
@@ -47,9 +49,6 @@ func init() {
 	metadata.Register(&audioMusePlugin{})
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Plugin registered successfully (id: %s)", pluginID))
 }
-
-// Compile-time check that we implement the interface
-var _ metadata.SimilarSongsByTrackProvider = (*audioMusePlugin)(nil)
 
 // getConfigString retrieves a string config value with a default fallback
 func getConfigString(key, defaultValue string) string {
@@ -125,7 +124,6 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar tracks", len(tracks)))
 
-
 	// Sort tracks by distance ascending (smaller distance = more similar)
 	//sort.Slice(tracks, func(i, j int) bool { return tracks[i].Distance < tracks[j].Distance })
 
@@ -148,52 +146,10 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 }
 
 func (p *audioMusePlugin) GetSimilarSongsByArtist(input metadata.SimilarSongsByArtistRequest) (*metadata.SimilarSongsResponse, error) {
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] GetSimilarSongsByArtist called for artist ID: %s, Name: %s", input.ID, input.Name))
-
-	apiBaseURL := getConfigString(configAPIUrl, defaultAPIUrl)
-	artistCount := getConfigInt("artistSimilarCount", defaultArtistSimilarCount)
-
-	params := url.Values{}
-	params.Set("artist", input.ID)
-	params.Set("n", strconv.Itoa(artistCount))
-	params.Set("include_component_matches", "true")
-
-	apiURL := fmt.Sprintf("%s/api/similar_artists?%s", apiBaseURL, params.Encode())
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling API: %s", apiURL))
-
-	req := pdk.NewHTTPRequest(pdk.MethodGet, apiURL)
-	resp := req.Send()
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.Status()))
-	if resp.Status() != 200 {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.Status())
-		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.Status())
+	artists, err := getSimilarArtists(input.ID, true)
+	if err != nil {
+		return nil, err
 	}
-
-	var artists []struct {
-		Artist string `json:"artist"`
-		ArtistID string `json:"artist_id"`
-		ComponentMatches []struct {
-			Artist1RepresentativeSongs []struct {
-				ItemID string `json:"item_id"`
-				Title  string `json:"title"`
-			} `json:"artist1_representative_songs"`
-			Artist2RepresentativeSongs []struct {
-				ItemID string `json:"item_id"`
-				Title  string `json:"title"`
-			} `json:"artist2_representative_songs"`
-		} `json:"component_matches"`
-	}
-
-	body := resp.Body()
-	if err := json.Unmarshal(body, &artists); err != nil {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: Failed to parse artist response: %v", err)
-		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("failed to parse AudioMuse-AI artist response: %w", err)
-	}
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar artists", len(artists)))
 
 	// Collect unique song IDs preserving order
 	songIDs := make([]string, 0)
@@ -231,6 +187,29 @@ func (p *audioMusePlugin) GetSimilarSongsByArtist(input metadata.SimilarSongsByA
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Returning %d artist-related songs to Navidrome", len(songs)))
 
 	return &metadata.SimilarSongsResponse{Songs: songs}, nil
+}
+
+// GetSimilarArtists implements metadata.SimilarArtistsProvider.
+func (p *audioMusePlugin) GetSimilarArtists(input metadata.SimilarArtistsRequest) (*metadata.SimilarArtistsResponse, error) {
+	artists, err := getSimilarArtists(input.ID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &metadata.SimilarArtistsResponse{
+		Artists: make([]metadata.ArtistRef, 0, len(artists)),
+	}
+
+	for _, a := range artists {
+		res.Artists = append(res.Artists, metadata.ArtistRef{
+			ID:   a.ArtistID,
+			Name: a.Artist,
+		})
+	}
+
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Returning %d related artists to Navidrome", len(res.Artists)))
+
+	return res, nil
 }
 
 func main() {}

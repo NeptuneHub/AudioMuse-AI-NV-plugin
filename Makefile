@@ -4,7 +4,7 @@ PACKAGE_NAME := audiomuseai
 .PHONY: build package clean
 
 build:
-	tinygo build -o $(PLUGIN_NAME).wasm -target=wasip1 -scheduler=none -buildmode=c-shared main.go
+	tinygo build -o $(PLUGIN_NAME).wasm -target=wasip1 -scheduler=none -buildmode=c-shared .
 
 package: build
 	# Navidrome expects the wasm file in the package to be named `plugin.wasm`
