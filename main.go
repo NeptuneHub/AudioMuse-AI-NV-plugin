@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 
 	"github.com/navidrome/navidrome/plugins/pdk/go/metadata"
@@ -13,7 +14,6 @@ import (
 // Configuration keys (must match manifest.json)
 const (
 	configAPIUrl              = "apiUrl"
-	configTrackCount          = "trackCount"
 	configEliminateDuplicates = "eliminateDuplicates"
 	configRadiusSimilarity    = "radiusSimilarity"
 )
@@ -21,7 +21,6 @@ const (
 // Default values
 const (
 	defaultAPIUrl              = "http://192.168.3.203:8000"
-	defaultTrackCount          = 200
 	defaultArtistSimilarCount  = 10
 	defaultEliminateDuplicates = true
 	defaultRadiusSimilarity    = true
@@ -81,17 +80,16 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 
 	// Read configuration
 	apiBaseURL := getConfigString(configAPIUrl, defaultAPIUrl)
-	trackCount := getConfigInt(configTrackCount, defaultTrackCount)
 	eliminateDuplicates := getConfigBool(configEliminateDuplicates, defaultEliminateDuplicates)
 	radiusSimilarity := getConfigBool(configRadiusSimilarity, defaultRadiusSimilarity)
 
 	pdk.Log(pdk.LogDebug, fmt.Sprintf("[AudioMuse] Config - API URL: %s, TrackCount: %d, EliminateDuplicates: %v, RadiusSimilarity: %v",
-		apiBaseURL, trackCount, eliminateDuplicates, radiusSimilarity))
+		apiBaseURL, input.Count, eliminateDuplicates, radiusSimilarity))
 
 	// Build the API URL with query parameters
 	params := url.Values{}
 	params.Set("item_id", input.ID)
-	params.Set("n", strconv.Itoa(trackCount))
+	params.Set("n", strconv.Itoa(int(input.Count)))
 	params.Set("eliminate_duplicates", strconv.FormatBool(eliminateDuplicates))
 	params.Set("radius_similarity", strconv.FormatBool(radiusSimilarity))
 
@@ -151,37 +149,72 @@ func (p *audioMusePlugin) GetSimilarSongsByArtist(input metadata.SimilarSongsByA
 		return nil, err
 	}
 
-	// Collect unique song IDs preserving order
-	songIDs := make([]string, 0)
 	seen := make(map[string]bool)
 
+	// songSlices contains artist songs in alternating order: [baseArtist, relatedArtist1, baseArtist, relatedArtist2, ...]
+	songSlices := [][]metadata.SongRef{}
+
 	for _, a := range artists {
+		var artist1Songs, artist2Songs []metadata.SongRef
+
 		for _, cm := range a.ComponentMatches {
 			for _, s := range cm.Artist1RepresentativeSongs {
+
 				if s.ItemID == "" {
 					continue
 				}
-				if !seen[s.ItemID] {
-					seen[s.ItemID] = true
-					songIDs = append(songIDs, s.ItemID)
+				if seen[s.ItemID] {
+					continue
 				}
+
+				seen[s.ItemID] = true
+				artist1Songs = append(artist1Songs, metadata.SongRef{ID: s.ItemID, Name: s.Title})
 			}
+
 			for _, s := range cm.Artist2RepresentativeSongs {
 				if s.ItemID == "" {
 					continue
 				}
-				if !seen[s.ItemID] {
-					seen[s.ItemID] = true
-					songIDs = append(songIDs, s.ItemID)
+
+				if seen[s.ItemID] {
+					continue
 				}
+
+				seen[s.ItemID] = true
+				artist2Songs = append(artist2Songs, metadata.SongRef{ID: s.ItemID, Name: s.Title})
 			}
+		}
+
+		if len(artist1Songs) > 0 {
+			songSlices = append(songSlices, artist1Songs)
+		}
+		if len(artist2Songs) > 0 {
+			songSlices = append(songSlices, artist2Songs)
 		}
 	}
 
-	// Build SongRef list (names not always available)
-	songs := make([]metadata.SongRef, 0, len(songIDs))
-	for _, id := range songIDs {
-		songs = append(songs, metadata.SongRef{ID: id})
+	songs := make([]metadata.SongRef, 0, input.Count)
+
+	// get songs from our slices until we have enough or we ran out
+	artistID := 0
+	for len(songs) < int(input.Count) && len(songSlices) > 0 {
+		song := songSlices[artistID][0] // take a song
+		songs = append(songs, song)
+
+		songSlices[artistID] = songSlices[artistID][1:] // remove it from the pool
+
+		if len(songSlices[artistID]) == 0 {
+			// this slice has no more songs, remove it
+			songSlices = slices.Delete(songSlices, artistID, artistID+1)
+			if len(songSlices) == 0 {
+				break
+			}
+		} else {
+			// else, go to the next slice
+			artistID++
+		}
+
+		artistID = artistID % len(songSlices) // loop around if needed
 	}
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Returning %d artist-related songs to Navidrome", len(songs)))
