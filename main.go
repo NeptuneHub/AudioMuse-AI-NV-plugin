@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/navidrome/navidrome/plugins/pdk/go/host"
 	"github.com/navidrome/navidrome/plugins/pdk/go/metadata"
 	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
 )
@@ -97,21 +98,29 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling API: %s", apiURL))
 
-	// Make HTTP GET request to AudioMuse-AI using PDK
-	req := pdk.NewHTTPRequest(pdk.MethodGet, apiURL)
-	resp := req.Send()
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.Status()))
-
-	if resp.Status() != 200 {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.Status())
+	// Make HTTP GET request to AudioMuse-AI using the host HTTP service.
+	// This uses host.HTTPSend as recommended by Navidrome upstream (migrated from pdk.NewHTTPRequest).
+	resp, err := host.HTTPSend(host.HTTPRequest{
+		Method: "GET",
+		URL:    apiURL,
+	})
+	if err != nil {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)
 		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.Status())
+		return nil, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
+	}
+
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
+
+	if resp.StatusCode != 200 {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
 	}
 
 	// Parse JSON response
 	var tracks []audioMuseResponse
-	body := resp.Body()
+	body := resp.Body
 	pdk.Log(pdk.LogDebug, fmt.Sprintf("[AudioMuse] Response body length: %d bytes", len(body)))
 
 	if err := json.Unmarshal(body, &tracks); err != nil {
