@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/navidrome/navidrome/plugins/pdk/go/host"
 	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
 )
 
@@ -36,19 +37,29 @@ func getSimilarArtists(id string, includeComponentMatches bool) ([]SimilarArtist
 	apiURL := fmt.Sprintf("%s/api/similar_artists?%s", apiBaseURL, params.Encode())
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling GetSimilarArtists API for artist ID %s: %s", id, apiURL))
 
-	req := pdk.NewHTTPRequest(pdk.MethodGet, apiURL)
-	resp := req.Send()
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.Status()))
-	if resp.Status() != 200 {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.Status())
+	// Make HTTP GET request to AudioMuse-AI using the host HTTP service.
+	// This uses host.HTTPSend as recommended by Navidrome upstream (migrated from pdk.NewHTTPRequest).
+	resp, err := host.HTTPSend(host.HTTPRequest{
+		Method:  "GET",
+		URL:     apiURL,
+		Headers: authHeaders(),
+	})
+	if err != nil {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)
 		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.Status())
+		return nil, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
+	}
+
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
+	if resp.StatusCode != 200 {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
 	}
 
 	var artists []SimilarArtistsResponse
 
-	body := resp.Body()
+	body := resp.Body
 	if err := json.Unmarshal(body, &artists); err != nil {
 		errMsg := fmt.Sprintf("[AudioMuse] ERROR: Failed to parse artist response: %v", err)
 		pdk.Log(pdk.LogError, errMsg)

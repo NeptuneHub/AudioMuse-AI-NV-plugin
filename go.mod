@@ -2,7 +2,7 @@ module audiomuse-navidrome-plugin
 
 go 1.25
 
-require github.com/navidrome/navidrome/plugins/pdk/go v0.0.0-20260128174646-77367548f6a2
+require github.com/navidrome/navidrome/plugins/pdk/go v0.0.0-20260224192836-652c27690be6
 
 require (
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
