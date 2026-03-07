@@ -15,6 +15,7 @@ import (
 // Configuration keys (must match manifest.json)
 const (
 	configAPIUrl              = "apiUrl"
+	configAPIToken            = "apiToken"
 	configEliminateDuplicates = "eliminateDuplicates"
 	configRadiusSimilarity    = "radiusSimilarity"
 )
@@ -76,6 +77,16 @@ func getConfigBool(key string, defaultValue bool) bool {
 	return defaultValue
 }
 
+// authHeaders returns a headers map with a Bearer token if configured, or nil otherwise.
+func authHeaders() map[string]string {
+	if token := getConfigString(configAPIToken, ""); token != "" {
+		return map[string]string{
+			"Authorization": "Bearer " + token,
+		}
+	}
+	return nil
+}
+
 func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTrackRequest) (*metadata.SimilarSongsResponse, error) {
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] GetSimilarSongsByTrack called for track ID: %s, Name: %s, Artist: %s", input.ID, input.Name, input.Artist))
 
@@ -101,8 +112,9 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 	// Make HTTP GET request to AudioMuse-AI using the host HTTP service.
 	// This uses host.HTTPSend as recommended by Navidrome upstream (migrated from pdk.NewHTTPRequest).
 	resp, err := host.HTTPSend(host.HTTPRequest{
-		Method: "GET",
-		URL:    apiURL,
+		Method:  "GET",
+		URL:     apiURL,
+		Headers: authHeaders(),
 	})
 	if err != nil {
 		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)

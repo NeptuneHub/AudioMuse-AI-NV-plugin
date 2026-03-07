@@ -40,8 +40,9 @@ func getSimilarArtists(id string, includeComponentMatches bool) ([]SimilarArtist
 	// Make HTTP GET request to AudioMuse-AI using the host HTTP service.
 	// This uses host.HTTPSend as recommended by Navidrome upstream (migrated from pdk.NewHTTPRequest).
 	resp, err := host.HTTPSend(host.HTTPRequest{
-		Method: "GET",
-		URL:    apiURL,
+		Method:  "GET",
+		URL:     apiURL,
+		Headers: authHeaders(),
 	})
 	if err != nil {
 		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)
