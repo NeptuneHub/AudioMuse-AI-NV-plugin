@@ -18,6 +18,7 @@ For Mobile app that want to map this functionality they need to implement the `g
 - Navidrome integrated web frontend;
 - [Substreamer](https://github.com/ghenry22/substreamer) - iOS/Android opensource mobile frontend, more information here: https://github.com/ghenry22/substreamer/issues/58;
 - [Tempus](https://github.com/eddyizm/tempus) - Android opensource mobile frontend, more information here: https://github.com/eddyizm/tempus/issues/410;
+- [Symfonium](https://symfonium.app/) - Androind closed source mobile frontend. You need to enable in the configuration `Use similar tracks for Radio Mix`. Additional functionality that use AudioMuse-AI API are actually implemented only using Jellyfin.
 
 Other frontnend not in this list could also work by using those API even.
 
