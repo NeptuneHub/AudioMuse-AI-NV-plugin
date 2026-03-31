@@ -14,6 +14,10 @@ Actually this is the list of integrated functionality:
 
 For Mobile app that want to map this functionality they need to implement the `getSimilarSongs2` / `getSimilarSongs` and `getArtistInfo` API.
 
+**Front-End tested with the plugin are:**
+- Navidrome integrated web frontend;
+- [Substreamer](https://github.com/ghenry22/substreamer) - iOS/Android opensource mobile frontend, more information here: https://github.com/ghenry22/substreamer/issues/58;
+
 
 > **IMPORTANT** InstantMix support in Navidrome start from v0.60.0: https://github.com/navidrome/navidrome/releases/tag/v0.60.0
 
