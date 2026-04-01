@@ -18,6 +18,7 @@
 go.work
 
 # Build artifacts
+audiomuse-navidrome-plugin
 bin/
 dist/
 build/
