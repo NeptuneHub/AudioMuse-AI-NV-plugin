@@ -1,3 +1,7 @@
+![GitHub license](https://img.shields.io/github/license/neptunehub/AudioMuse-AI-NV-plugin.svg)
+![Latest Tag](https://img.shields.io/github/v/tag/neptunehub/AudioMuse-AI-NV-plugin?label=latest-tag)
+![Media Server Support: Navidrome 0.61.0](https://img.shields.io/badge/Media%20Server-Navidrome%200.61.0-blue?style=flat-square&logo=server&logoColor=white)
+
 # AudioMuse-AI Navidrome Plugin
 
 <p align="center">
