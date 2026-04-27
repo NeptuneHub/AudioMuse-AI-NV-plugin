@@ -10,6 +10,7 @@ import (
 	"github.com/navidrome/navidrome/plugins/pdk/go/host"
 	"github.com/navidrome/navidrome/plugins/pdk/go/metadata"
 	"github.com/navidrome/navidrome/plugins/pdk/go/pdk"
+	"audiomuse-navidrome-plugin/sonicsimilarity"
 )
 
 // Configuration keys (must match manifest.json)
@@ -32,14 +33,20 @@ const (
 var _ metadata.SimilarSongsByArtistProvider = (*audioMusePlugin)(nil)
 var _ metadata.SimilarSongsByTrackProvider = (*audioMusePlugin)(nil)
 var _ metadata.SimilarArtistsProvider = (*audioMusePlugin)(nil)
+var _ sonicsimilarity.SonicSimilarity = (*audioMusePlugin)(nil)
 
-// audioMuseResponse represents a single track from AudioMuse-AI API
-type audioMuseResponse struct {
+// audioMuseTrackResponse represents a single track from AudioMuse-AI API
+// and is used for both similar-track and path responses.
+type audioMuseTrackResponse struct {
 	ItemID   string  `json:"item_id"`
 	Title    string  `json:"title"`
 	Author   string  `json:"author"`
 	Album    string  `json:"album"`
 	Distance float64 `json:"distance"`
+}
+
+type audioMusePathResponse struct {
+	Path []audioMuseTrackResponse `json:"path"`
 }
 
 const pluginID = "audiomuseai"
@@ -48,6 +55,7 @@ type audioMusePlugin struct{}
 
 func init() {
 	metadata.Register(&audioMusePlugin{})
+	sonicsimilarity.Register(&audioMusePlugin{})
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Plugin registered successfully (id: %s)", pluginID))
 }
 
@@ -90,61 +98,10 @@ func authHeaders() map[string]string {
 func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTrackRequest) (*metadata.SimilarSongsResponse, error) {
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] GetSimilarSongsByTrack called for track ID: %s, Name: %s, Artist: %s", input.ID, input.Name, input.Artist))
 
-	// Read configuration
-	apiBaseURL := getConfigString(configAPIUrl, defaultAPIUrl)
-	eliminateDuplicates := getConfigBool(configEliminateDuplicates, defaultEliminateDuplicates)
-	radiusSimilarity := getConfigBool(configRadiusSimilarity, defaultRadiusSimilarity)
-
-	pdk.Log(pdk.LogDebug, fmt.Sprintf("[AudioMuse] Config - API URL: %s, TrackCount: %d, EliminateDuplicates: %v, RadiusSimilarity: %v",
-		apiBaseURL, input.Count, eliminateDuplicates, radiusSimilarity))
-
-	// Build the API URL with query parameters
-	params := url.Values{}
-	params.Set("item_id", input.ID)
-	params.Set("n", strconv.Itoa(int(input.Count)))
-	params.Set("eliminate_duplicates", strconv.FormatBool(eliminateDuplicates))
-	params.Set("radius_similarity", strconv.FormatBool(radiusSimilarity))
-
-	apiURL := fmt.Sprintf("%s/api/similar_tracks?%s", apiBaseURL, params.Encode())
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling API: %s", apiURL))
-
-	// Make HTTP GET request to AudioMuse-AI using the host HTTP service.
-	// This uses host.HTTPSend as recommended by Navidrome upstream (migrated from pdk.NewHTTPRequest).
-	resp, err := host.HTTPSend(host.HTTPRequest{
-		Method:  "GET",
-		URL:     apiURL,
-		Headers: authHeaders(),
-	})
+	tracks, err := p.getAudioMuseSimilarTracks(input.ID, int(input.Count))
 	if err != nil {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)
-		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
+		return nil, err
 	}
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
-
-	if resp.StatusCode != 200 {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
-		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
-	}
-
-	// Parse JSON response
-	var tracks []audioMuseResponse
-	body := resp.Body
-	pdk.Log(pdk.LogDebug, fmt.Sprintf("[AudioMuse] Response body length: %d bytes", len(body)))
-
-	if err := json.Unmarshal(body, &tracks); err != nil {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: Failed to parse response: %v", err)
-		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("failed to parse AudioMuse-AI response: %w", err)
-	}
-
-	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar tracks", len(tracks)))
-
-	// Sort tracks by distance ascending (smaller distance = more similar)
-	//sort.Slice(tracks, func(i, j int) bool { return tracks[i].Distance < tracks[j].Distance })
 
 	// Convert to Navidrome SongRef format preserving order
 	songs := make([]metadata.SongRef, 0, len(tracks))
@@ -159,9 +116,151 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Returning %d songs to Navidrome", len(songs)))
 
-	return &metadata.SimilarSongsResponse{
-		Songs: songs,
-	}, nil
+	return &metadata.SimilarSongsResponse{Songs: songs}, nil
+}
+
+func (p *audioMusePlugin) getAudioMuseSimilarTracks(itemID string, count int) ([]audioMuseTrackResponse, error) {
+	apiBaseURL := getConfigString(configAPIUrl, defaultAPIUrl)
+	eliminateDuplicates := getConfigBool(configEliminateDuplicates, defaultEliminateDuplicates)
+	radiusSimilarity := getConfigBool(configRadiusSimilarity, defaultRadiusSimilarity)
+
+	params := url.Values{}
+	params.Set("item_id", itemID)
+	params.Set("n", strconv.Itoa(count))
+	params.Set("eliminate_duplicates", strconv.FormatBool(eliminateDuplicates))
+	params.Set("radius_similarity", strconv.FormatBool(radiusSimilarity))
+
+	apiURL := fmt.Sprintf("%s/api/similar_tracks?%s", apiBaseURL, params.Encode())
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling similar_tracks API: %s", apiURL))
+
+	resp, err := host.HTTPSend(host.HTTPRequest{
+		Method:  "GET",
+		URL:     apiURL,
+		Headers: authHeaders(),
+	})
+	if err != nil {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err)
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
+	}
+
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
+	if resp.StatusCode != 200 {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
+	}
+
+	var tracks []audioMuseTrackResponse
+	if err := json.Unmarshal(resp.Body, &tracks); err != nil {
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: Failed to parse similar_tracks response: %v", err)
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("failed to parse AudioMuse-AI similar tracks response: %w", err)
+	}
+
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar tracks", len(tracks)))
+	return tracks, nil
+}
+
+func (p *audioMusePlugin) GetSonicSimilarTracks(input sonicsimilarity.GetSonicSimilarTracksRequest) (sonicsimilarity.SonicSimilarityResponse, error) {
+	if input.Song.ID == "" {
+		return sonicsimilarity.SonicSimilarityResponse{}, fmt.Errorf("song.id is required")
+	}
+
+	count := int(input.Count)
+	if count <= 0 {
+		count = 10
+	}
+
+	tracks, err := p.getAudioMuseSimilarTracks(input.Song.ID, count)
+	if err != nil {
+		return sonicsimilarity.SonicSimilarityResponse{}, err
+	}
+
+	matches := make([]sonicsimilarity.SonicMatch, 0, len(tracks))
+	for _, track := range tracks {
+		matches = append(matches, sonicsimilarity.SonicMatch{
+			Song: metadata.SongRef{
+				ID:     track.ItemID,
+				Name:   track.Title,
+				Artist: track.Author,
+				Album:  track.Album,
+			},
+			Similarity: normalizeSimilarity(track.Distance),
+		})
+	}
+
+	return sonicsimilarity.SonicSimilarityResponse{Matches: matches}, nil
+}
+
+func (p *audioMusePlugin) FindSonicPath(input sonicsimilarity.FindSonicPathRequest) (sonicsimilarity.SonicSimilarityResponse, error) {
+	if input.StartSong.ID == "" || input.EndSong.ID == "" {
+		return sonicsimilarity.SonicSimilarityResponse{}, fmt.Errorf("startSong.id and endSong.id are required")
+	}
+
+	count := int(input.Count)
+	if count <= 0 {
+		count = 25
+	}
+
+	apiBaseURL := getConfigString(configAPIUrl, defaultAPIUrl)
+	params := url.Values{}
+	params.Set("start_song_id", input.StartSong.ID)
+	params.Set("end_song_id", input.EndSong.ID)
+	params.Set("count", strconv.Itoa(count))
+	params.Set("max_steps", strconv.Itoa(count))
+	params.Set("path_fix_size", "false")
+	params.Set("mood_pct", "100")
+
+	apiURL := fmt.Sprintf("%s/api/find_path?%s", apiBaseURL, params.Encode())
+	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Calling FindSonicPath API from %s to %s: %s", input.StartSong.ID, input.EndSong.ID, apiURL))
+
+	resp, err := host.HTTPSend(host.HTTPRequest{
+		Method:  "GET",
+		URL:     apiURL,
+		Headers: authHeaders(),
+	})
+	if err != nil {
+		pdk.Log(pdk.LogError, fmt.Sprintf("[AudioMuse] ERROR: HTTP request failed: %v", err))
+		return sonicsimilarity.SonicSimilarityResponse{}, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
+	}
+
+	if resp.StatusCode != 200 {
+		pdk.Log(pdk.LogError, fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode))
+		return sonicsimilarity.SonicSimilarityResponse{}, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
+	}
+
+	var result audioMusePathResponse
+	if err := json.Unmarshal(resp.Body, &result); err != nil {
+		pdk.Log(pdk.LogError, fmt.Sprintf("[AudioMuse] ERROR: Failed to parse FindSonicPath response: %v", err))
+		return sonicsimilarity.SonicSimilarityResponse{}, fmt.Errorf("failed to parse AudioMuse-AI find path response: %w", err)
+	}
+
+	matches := make([]sonicsimilarity.SonicMatch, 0, len(result.Path))
+	for _, item := range result.Path {
+		matches = append(matches, sonicsimilarity.SonicMatch{
+			Song: metadata.SongRef{
+				ID:     item.ItemID,
+				Name:   item.Title,
+				Artist: item.Author,
+				Album:  item.Album,
+			},
+			Similarity: -1.0,
+		})
+	}
+
+	return sonicsimilarity.SonicSimilarityResponse{Matches: matches}, nil
+}
+
+func normalizeSimilarity(distance float64) float64 {
+	similarity := 1.0 - distance
+	if similarity < 0 {
+		similarity = 0
+	}
+	if similarity > 1 {
+		similarity = 1
+	}
+	return similarity
 }
 
 func (p *audioMusePlugin) GetSimilarSongsByArtist(input metadata.SimilarSongsByArtistRequest) (*metadata.SimilarSongsResponse, error) {
