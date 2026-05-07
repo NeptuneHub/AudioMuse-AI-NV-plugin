@@ -2,7 +2,7 @@
   "name": "AudioMuse-AI Instant Mix",
   "id": "audiomuseai",
   "author": "AudioMuse",
-  "homepage": "https://github.com/yourusername/audiomuse-navidrome-plugin",
+  "website": "https://github.com/NeptuneHub/AudioMuse-AI-NV-plugin",
   "version": "1.0.0",
   "description": "Replaces the Instant Mix button with AudioMuse-AI recommendations for similar tracks",
   "config": {
