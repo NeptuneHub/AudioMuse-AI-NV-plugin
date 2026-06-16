@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"slices"
 	"strconv"
@@ -19,6 +20,7 @@ const (
 	configAPIToken            = "apiToken"
 	configEliminateDuplicates = "eliminateDuplicates"
 	configRadiusSimilarity    = "radiusSimilarity"
+	configShuffleBeforeAdd    = "shuffleBeforeAdd"
 )
 
 // Default values
@@ -27,6 +29,7 @@ const (
 	defaultArtistSimilarCount  = 10
 	defaultEliminateDuplicates = true
 	defaultRadiusSimilarity    = true
+	defaultShuffleBeforeAdd    = false
 )
 
 // Compile-time check that we implement necessary interfaces
@@ -85,6 +88,16 @@ func getConfigBool(key string, defaultValue bool) bool {
 	return defaultValue
 }
 
+func shuffleSongs(songs []metadata.SongRef) {
+	if len(songs) < 2 {
+		return
+	}
+
+	rand.Shuffle(len(songs), func(i, j int) {
+		songs[i], songs[j] = songs[j], songs[i]
+	})
+}
+
 // authHeaders returns a headers map with a Bearer token if configured, or nil otherwise.
 func authHeaders() map[string]string {
 	if token := getConfigString(configAPIToken, ""); token != "" {
@@ -112,6 +125,10 @@ func (p *audioMusePlugin) GetSimilarSongsByTrack(input metadata.SimilarSongsByTr
 			Artist: track.Author,
 			Album:  track.Album,
 		})
+	}
+
+	if getConfigBool(configShuffleBeforeAdd, defaultShuffleBeforeAdd) {
+		shuffleSongs(songs)
 	}
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Returning %d songs to Navidrome", len(songs)))
