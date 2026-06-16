@@ -39,6 +39,12 @@
           "title": "Use Radius Similarity",
           "description": "Use radius-based similarity algorithm. Default: true",
           "default": true
+        },
+        "shuffleBeforeAdd": {
+          "type": "boolean",
+          "title": "Shuffle Before Add",
+          "description": "Shuffle similar songs before returning them to Instant Mix. Default: false",
+          "default": false
         }
       }
     },
@@ -76,6 +82,10 @@
                 {
                   "type": "Control",
                   "scope": "#/properties/radiusSimilarity"
+                },
+                {
+                  "type": "Control",
+                  "scope": "#/properties/shuffleBeforeAdd"
                 }
               ]
             }
