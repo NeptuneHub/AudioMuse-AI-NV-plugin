@@ -216,7 +216,7 @@ func getSimilarTracks(itemID string, count int) ([]audioMuseTrackResponse, error
 }
 
 func getLyricsSimilarTracks(itemID string, count int) ([]audioMuseTrackResponse, error) {
-	results, err := postAudioMuseSimilarTracks("/api/sem_grove/search", "sem_grove_search", itemID, count)
+	results, err := postAudioMuseSimilarTracks("/api/sem_grove/search", "sem_grove_search", itemID, count+1)
 	if err != nil {
 		return nil, err
 	}
@@ -230,6 +230,9 @@ func getLyricsSimilarTracks(itemID string, count int) ([]audioMuseTrackResponse,
 			track.Distance = 1 - track.Similarity
 		}
 		tracks = append(tracks, track)
+	}
+	if count > 0 && len(tracks) > count {
+		tracks = tracks[:count]
 	}
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar tracks", len(tracks)))
@@ -252,6 +255,19 @@ func getHyperbolicSimilarTracks(itemID string, count int) ([]audioMuseTrackRespo
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] Successfully parsed %d similar tracks", len(tracks)))
 	return tracks, nil
+}
+
+func apiErrorMessage(body []byte) string {
+	var payload struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &payload); err == nil && payload.Error != "" {
+		return payload.Error
+	}
+	if len(body) > 200 {
+		return string(body[:200])
+	}
+	return string(body)
 }
 
 func postAudioMuseSimilarTracks(endpoint, label, itemID string, count int) ([]audioMuseTrackResponse, error) {
@@ -292,9 +308,10 @@ func postAudioMuseSimilarTracks(endpoint, label, itemID string, count int) ([]au
 
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
 	if resp.StatusCode != 200 {
-		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
+		apiError := apiErrorMessage(resp.Body)
+		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d: %s", resp.StatusCode, apiError)
 		pdk.Log(pdk.LogError, errMsg)
-		return nil, fmt.Errorf("AudioMuse-AI returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("AudioMuse-AI returned status %d: %s", resp.StatusCode, apiError)
 	}
 
 	var result audioMuseResultsResponse
