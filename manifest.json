@@ -33,6 +33,26 @@
           "minimum": 1,
           "maximum": 100
         },
+        "instantMixSource": {
+          "type": "string",
+          "title": "Instant Mix Functionality",
+          "description": "Which AudioMuse-AI similarity engine powers Instant Mix. 'Lyrics by Song' needs the SemGrove index and 'Hyperbolic Similarity' needs the hyperbolic projection built in AudioMuse-AI. Default: Similar Song.",
+          "default": "similarSong",
+          "oneOf": [
+            {
+              "const": "similarSong",
+              "title": "Similar Song"
+            },
+            {
+              "const": "lyricsBySong",
+              "title": "Lyrics by Song"
+            },
+            {
+              "const": "hyperbolic",
+              "title": "Hyperbolic Similarity"
+            }
+          ]
+        },
         "eliminateDuplicates": {
           "type": "boolean",
           "title": "Eliminate Duplicates",
@@ -76,7 +96,23 @@
           "label": "Song Instant Mix",
           "elements": [
             {
+              "type": "Control",
+              "scope": "#/properties/instantMixSource"
+            },
+            {
               "type": "HorizontalLayout",
+              "rule": {
+                "effect": "HIDE",
+                "condition": {
+                  "scope": "#/properties/instantMixSource",
+                  "schema": {
+                    "enum": [
+                      "lyricsBySong",
+                      "hyperbolic"
+                    ]
+                  }
+                }
+              },
               "elements": [
                 {
                   "type": "Control",

@@ -53,6 +53,12 @@ func getSimilarArtists(id string, includeComponentMatches bool) ([]SimilarArtist
 		return nil, fmt.Errorf("AudioMuse-AI HTTP request failed: %w", err)
 	}
 
+	if resp == nil {
+		errMsg := "[AudioMuse] ERROR: empty HTTP response"
+		pdk.Log(pdk.LogError, errMsg)
+		return nil, fmt.Errorf("AudioMuse-AI returned an empty HTTP response")
+	}
+
 	pdk.Log(pdk.LogInfo, fmt.Sprintf("[AudioMuse] API response status: %d", resp.StatusCode))
 	if resp.StatusCode != 200 {
 		errMsg := fmt.Sprintf("[AudioMuse] ERROR: AudioMuse-AI returned status %d", resp.StatusCode)
