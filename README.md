@@ -30,6 +30,7 @@ For Mobile app that want to map this functionality they need to implement the `g
 Other frontnend not in this list could also work by using those API even.
 
 **NEWS**
+> * From AudioMuse-AI-NV-plugin v11 InstantMix support also DCLAP. To use it you **must** have AudioMuse-AI v3.7.0 or higher
 > * From AudioMuse-AI-NV-plugin v10 different AudioMuse-AI functionality can be selected for the InstantMix, chose it in the plugin configuration
 > * From AudioMuse-AI-NV-plugin v8 the Sonic Similarity API extension are supported on top of the previous one. The API are [documented here](https://opensubsonic.netlify.app/docs/extensions/sonicsimilarity/) and supported by [this Navidrome PR](https://github.com/navidrome/navidrome/pull/5419)
 > * InstantMix support in Navidrome start from v0.60.0: https://github.com/navidrome/navidrome/releases/tag/v0.60.0
