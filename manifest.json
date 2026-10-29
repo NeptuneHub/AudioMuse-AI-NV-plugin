@@ -36,7 +36,7 @@
         "instantMixSource": {
           "type": "string",
           "title": "Instant Mix Functionality",
-          "description": "Which AudioMuse-AI similarity engine powers Instant Mix. 'Lyrics by Song' needs the SemGrove index and 'Hyperbolic Similarity' needs the hyperbolic projection built in AudioMuse-AI. Default: Similar Song.",
+          "description": "Which AudioMuse-AI similarity engine powers Instant Mix. 'Lyrics by Song' needs the SemGrove index, 'Hyperbolic Similarity' needs the hyperbolic projection and 'DCLAP' needs the CLAP index built in AudioMuse-AI. Default: Similar Song.",
           "default": "similarSong",
           "oneOf": [
             {
@@ -50,6 +50,10 @@
             {
               "const": "hyperbolic",
               "title": "Hyperbolic Similarity"
+            },
+            {
+              "const": "dclap",
+              "title": "DCLAP"
             }
           ]
         },
@@ -120,7 +124,16 @@
                 },
                 {
                   "type": "Control",
-                  "scope": "#/properties/radiusSimilarity"
+                  "scope": "#/properties/radiusSimilarity",
+                  "rule": {
+                    "effect": "HIDE",
+                    "condition": {
+                      "scope": "#/properties/instantMixSource",
+                      "schema": {
+                        "const": "dclap"
+                      }
+                    }
+                  }
                 }
               ]
             }

@@ -76,9 +76,10 @@ services:
 > - The **Instant Mix Functionality** select choose which AudioMuse-AI engine answer Instant Mix and Sonic Similarity:
 >   - **Similar Song** (default) - `GET /api/similar_tracks`, the historical behaviour;
 >   - **Lyrics by Song** - `POST /api/sem_grove/search`, it need the SemGrove index (lyrics + audio analysis) built in AudioMuse-AI;
->   - **Hyperbolic Similarity** - `POST /api/hyperbolic/similar` in its standard mode, it need the hyperbolic projection built in AudioMuse-AI.
+>   - **Hyperbolic Similarity** - `POST /api/hyperbolic/similar` in its standard mode, it need the hyperbolic projection built in AudioMuse-AI;
+>   - **DCLAP** - `POST /api/clap/search_by_song`, it need CLAP enabled and the DCLAP index built in AudioMuse-AI.
 >
->   'Eliminate Duplicates' and 'Use Radius Similarity' apply only to **Similar Song**, the other two engine use the AudioMuse-AI default.
+>   'Eliminate Duplicates' apply to **Similar Song** and **DCLAP**, 'Use Radius Similarity' apply only to **Similar Song**, the other engine use the AudioMuse-AI default.
 
 See the official [Navidrome Documentation](https://www.navidrome.org/docs/usage/features/plugins/#managing-plugins-in-the-web-ui) for more information on how the plugin works.
 
