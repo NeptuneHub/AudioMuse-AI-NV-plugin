@@ -54,8 +54,20 @@
             {
               "const": "dclap",
               "title": "DCLAP"
+            },
+            {
+              "const": "songAlchemy",
+              "title": "Song Alchemy"
             }
           ]
+        },
+        "alchemyTemperature": {
+          "type": "number",
+          "title": "Temperature",
+          "description": "Song Alchemy randomness: 0 returns the closest songs, higher values pick more varied songs. Default: 1",
+          "default": 1,
+          "minimum": 0,
+          "maximum": 10
         },
         "eliminateDuplicates": {
           "type": "boolean",
@@ -104,6 +116,19 @@
               "scope": "#/properties/instantMixSource"
             },
             {
+              "type": "Control",
+              "scope": "#/properties/alchemyTemperature",
+              "rule": {
+                "effect": "SHOW",
+                "condition": {
+                  "scope": "#/properties/instantMixSource",
+                  "schema": {
+                    "const": "songAlchemy"
+                  }
+                }
+              }
+            },
+            {
               "type": "HorizontalLayout",
               "rule": {
                 "effect": "HIDE",
@@ -112,7 +137,8 @@
                   "schema": {
                     "enum": [
                       "lyricsBySong",
-                      "hyperbolic"
+                      "hyperbolic",
+                      "songAlchemy"
                     ]
                   }
                 }

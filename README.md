@@ -78,7 +78,8 @@ services:
 >   - **Similar Song** (default) - `GET /api/similar_tracks`, the historical behaviour;
 >   - **Lyrics by Song** - `POST /api/sem_grove/search`, it need the SemGrove index (lyrics + audio analysis) built in AudioMuse-AI;
 >   - **Hyperbolic Similarity** - `POST /api/hyperbolic/similar` in its standard mode, it need the hyperbolic projection built in AudioMuse-AI;
->   - **DCLAP** - `POST /api/clap/search_by_song`, it need CLAP enabled and the DCLAP index built in AudioMuse-AI.
+>   - **DCLAP** - `POST /api/clap/search_by_song`, it need CLAP enabled and the DCLAP index built in AudioMuse-AI;
+>   - **Song Alchemy** - `POST /api/alchemy` with the song as the only ADD item and the configured 'Temperature' (default 1), it's the MusiCNN similarity with randomness.
 >
 >   'Eliminate Duplicates' apply to **Similar Song** and **DCLAP**, 'Use Radius Similarity' apply only to **Similar Song**, the other engine use the AudioMuse-AI default.
 
